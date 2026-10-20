@@ -1,0 +1,27 @@
+{
+  "name": "resume-ai-backend",
+  "version": "1.0.0",
+  "author": "Akotur2005 (https://github.com/Akotur2005)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Akotur2005/resume-ai.git"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch-path=src src/server.js",
+    "start": "node src/server.js",
+    "db:init": "psql \"$DATABASE_URL\" -f db/schema.sql"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.0",
+    "@langchain/google-genai": "^0.1.2",
+    "@langchain/openai": "^0.3.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.12.0",
+    "zod": "^3.23.8"
+  }
+}
