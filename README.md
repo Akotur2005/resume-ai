@@ -3,7 +3,7 @@
 **Author:** [Akotur2005](https://github.com/Akotur2005)  
 **Repository:** [https://github.com/Akotur2005/resume-ai](https://github.com/Akotur2005/resume-ai)
 
-Stack: **React (Vite)** + **Node/Express** + **LangChain (JS)** + **PostgreSQL**
+Stack: **React (Vite)** + **Python (Flask)** + **LangChain** + **PostgreSQL**
 
 ## What it does
 
@@ -17,14 +17,15 @@ Stack: **React (Vite)** + **Node/Express** + **LangChain (JS)** + **PostgreSQL**
 resume-ai/
   backend/
     db/schema.sql              tables: resumes, reviews
-    src/server.js              Express app
-    src/db.js                  pg connection pool
-    src/routes/resumes.js      CRUD + AI helpers (bullet, summary)
-    src/routes/reviews.js      upload review, builder review, PDF import, history
-    src/utils/pdf.js           PDF -> text, resume JSON -> text
-    src/langchain/model.js     the LLM client
-    src/langchain/reviewChain.js   ATS scoring chain
-    src/langchain/builderChain.js  bullet, summary, and PDF-parse chains
+    app.py                     Flask app
+    db.py                      psycopg2 connection pool
+    routes/resumes.py          CRUD + AI helpers (bullet, summary)
+    routes/reviews.py          upload review, builder review, PDF import, history
+    utils/pdf_utils.py         PDF -> text, resume JSON -> text
+    chains/model.py            LangChain LLM client (Google Gemini)
+    chains/review_chain.py     ATS scoring chain (Pydantic structured output)
+    chains/builder_chain.py    bullet, summary, and PDF-parse chains
+    requirements.txt           Python dependencies
   frontend/
     src/App.jsx                tabs
     src/api.js                 fetch wrapper
@@ -37,23 +38,16 @@ resume-ai/
 ## Setup
  
 ```bash
-# Clone the repository
-git clone https://github.com/Akotur2005/resume-ai.git
-cd resume-ai
+# 1. Backend (Python + Flask)
+cd resume-ai/backend
+pip install -r requirements.txt
+python app.py                 # API on http://localhost:5000
 
-# 1. Database
-createdb resume_ai
-cd backend
-cp .env.example .env            # set DATABASE_URL and OPENAI_API_KEY
-npm install
-npm run db:init                 # creates the tables
-npm run dev                     # API on :5000
-
-# 2. Frontend (new terminal)
-cd frontend
-npm install
-npm run dev                     # app on :5173
+# 2. Frontend (React + Vite)
+cd resume-ai/frontend
+npm run dev                   # App on http://localhost:5173
 ```
+
 
 ## Project flow
 
@@ -125,4 +119,3 @@ Single column, no tables or images, standard headings (Summary, Skills, Experien
 ## Author
 
 Developed by **[Akotur2005](https://github.com/Akotur2005)**
-
