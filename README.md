@@ -54,26 +54,26 @@ npm run dev                   # App on http://localhost:5173
 ### A. Reviewing an uploaded PDF
 ```
 React (file + job description)
-  -> POST /api/reviews/upload  (multer reads the file into memory)
-  -> pdf-parse extracts plain text
-  -> LangChain reviewChain: prompt -> LLM -> validated JSON (score, issues, keywords)
-  -> INSERT into reviews table (PostgreSQL)
+  -> POST /api/reviews/upload (Flask handles file upload)
+  -> pypdf extracts plain text
+  -> LangChain review_chain: prompt -> Gemini LLM -> validated JSON (score, issues, keywords)
+  -> INSERT into reviews table (PostgreSQL via psycopg2)
   -> JSON returned -> ReviewResult.jsx shows the report
 ```
 
 ### B. Building a resume
 ```
 Form state (React) -> live ResumePreview (ATS layout)
-  "AI improve" on a bullet  -> POST /api/resumes/ai/bullet  -> bulletChain
-  "AI write" on the summary -> POST /api/resumes/ai/summary -> summaryChain
+  "AI improve" on a bullet  -> POST /api/resumes/ai/bullet  -> bullet_chain
+  "AI write" on the summary -> POST /api/resumes/ai/summary -> summary_chain
   Save   -> POST/PUT /api/resumes -> stored as JSONB in the resumes table
-  Review -> POST /api/reviews/builder -> JSON -> text -> reviewChain -> saved in reviews
+  Review -> POST /api/reviews/builder -> JSON -> text -> review_chain -> saved in reviews
   Print  -> browser "Save as PDF" (text stays selectable, so ATS can read it)
 ```
 
 ### C. Importing an old PDF into the builder
 ```
-PDF -> pdf-parse text -> parseChain (LangChain structured output) -> resume JSON -> form fields
+PDF -> pypdf text -> parse_chain (LangChain structured output) -> resume JSON -> form fields
 ```
 
 ## What is LangChain, and what does it do here?
@@ -84,21 +84,21 @@ The pieces used in this project:
 
 | LangChain piece | Where | What it does for us |
 |---|---|---|
-| `ChatOpenAI` | `model.js` | One wrapper around the LLM. If you switch to another provider later, only this file changes. |
+| `ChatGoogleGenerativeAI` | `chains/model.py` | LLM client for Google Gemini (`gemini-2.5-flash`). |
 | `ChatPromptTemplate` | every chain | Reusable prompt with `{resume}` and `{jobDescription}` placeholders. Keeps the ATS rules in one place. |
-| `.pipe()` (LCEL) | every chain | Connects steps: `prompt -> model -> parser`. Each step's output feeds the next. |
-| `withStructuredOutput(zodSchema)` | `reviewChain.js`, `parseChain` | Forces the model to return JSON that matches our Zod schema (score, issues, keywords). No fragile regex parsing of text, so the React UI can rely on the shape. |
-| `StringOutputParser` | bullet, summary chains | Turns the model's message object into a plain string. |
+| `|` (LCEL Pipe) | every chain | Connects steps: `prompt | model | parser`. Each step's output feeds the next. |
+| `with_structured_output(ReviewSchema)` | `review_chain.py`, `builder_chain.py` | Forces the model to return JSON that matches our Pydantic schema (score, issues, keywords). No fragile regex parsing of text, so the React UI can rely on the shape. |
+| `StrOutputParser` | bullet, summary chains | Turns the model's message object into a clean string. |
 
-So in this project LangChain is the **AI orchestration layer**. Express handles HTTP and the database, React handles the UI, and LangChain turns "resume text + job description" into a reliable, structured ATS report.
+So in this project LangChain is the **AI orchestration layer**. Flask handles HTTP and PostgreSQL, React handles the UI, and LangChain turns "resume text + job description" into a reliable, structured ATS report.
 
-Example: the review chain is just
+Example: the review chain is:
 
-```js
-prompt.pipe(llm.withStructuredOutput(reviewSchema))
+```python
+review_chain = prompt | llm.with_structured_output(ReviewSchema)
 ```
 
-which reads as: fill the prompt, send it to the model, and return an object that matches `reviewSchema`.
+which reads as: fill the prompt, send it to the Gemini model, and return a validated Pydantic object that matches `ReviewSchema`.
 
 ## Why PostgreSQL
 
