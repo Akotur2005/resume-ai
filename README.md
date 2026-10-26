@@ -203,3 +203,32 @@ npm install
 npm.cmd run dev
 ```
 The client interface is accessible at `http://localhost:5173`.
+
+---
+
+## Running with Docker (Recommended)
+
+The entire full-stack application (PostgreSQL + pgvector, Flask Backend, and React Frontend with Nginx) can be launched with a single Docker Compose command:
+
+### 1. Configure Environment
+Set your Gemini API key in `.env`:
+```bash
+cp .env.example .env
+# Edit .env and paste your GEMINI_API_KEY
+```
+
+### 2. Start Containers
+```bash
+docker compose up --build
+```
+
+### 3. Access Application
+- **Frontend:** `http://localhost:5173`
+- **Backend API:** `http://localhost:5000`
+- **PostgreSQL Database:** `localhost:5432` (database: `resume_ai`, user: `postgres`, password: `postgres`)
+
+To stop the services:
+```bash
+docker compose down
+```
+
