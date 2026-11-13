@@ -12,7 +12,7 @@ def format_review_summary(row):
     if not row:
         return None
     d = dict(row)
-    if "created_at" in d and d["created_at"]:
+    if hasattr(d.get("created_at"), "isoformat"):
         d["created_at"] = d["created_at"].isoformat()
     return d
 
@@ -47,7 +47,7 @@ def upload_review():
         commit=True
     )
     
-    created_at_iso = row["created_at"].isoformat() if row and row["created_at"] else None
+    created_at_iso = row["created_at"].isoformat() if row and hasattr(row.get("created_at"), "isoformat") else None
     response_data = {
         "id": row["id"],
         "createdAt": created_at_iso,
@@ -83,7 +83,7 @@ def builder_review():
         commit=True
     )
     
-    created_at_iso = row["created_at"].isoformat() if row and row["created_at"] else None
+    created_at_iso = row["created_at"].isoformat() if row and hasattr(row.get("created_at"), "isoformat") else None
     response_data = {
         "id": row["id"],
         "createdAt": created_at_iso,
@@ -125,7 +125,7 @@ def get_review(review_id):
     if not row:
         return jsonify({"error": "Not found"}), 404
         
-    created_at_iso = row["created_at"].isoformat() if row["created_at"] else None
+    created_at_iso = row["created_at"].isoformat() if row and hasattr(row.get("created_at"), "isoformat") else None
     result_data = row["result"] if isinstance(row["result"], dict) else json.loads(row["result"])
     response_data = {
         "id": row["id"],

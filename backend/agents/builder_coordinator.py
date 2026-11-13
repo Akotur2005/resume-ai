@@ -13,6 +13,12 @@ from chains.model import llm  # type: ignore
 from langchain_core.prompts import ChatPromptTemplate  # type: ignore
 from langchain_core.output_parsers import StrOutputParser  # type: ignore
 
+def get_val(obj: Any, key: str, default: Any = None) -> Any:
+    """Helper to safely access attributes from Pydantic objects or dicts without linter errors."""
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return getattr(obj, key, default)
+
 class MultiAgentResumeBuilder:
     """
     Multi-Agent Resume Construction & Optimization Engine.
@@ -48,19 +54,24 @@ class MultiAgentResumeBuilder:
             "vector_insights": str(vector_insights)
         })
 
-        effective_role = target_title or analysis.target_role
-        combined_skills = analysis.primary_skills + analysis.tools_and_frameworks
+        analysis_role = get_val(analysis, "target_role", "Target Role")
+        effective_role = target_title or analysis_role
+        prim_skills = get_val(analysis, "primary_skills", [])
+        tools_fw = get_val(analysis, "tools_and_frameworks", [])
+        domain_kws = get_val(analysis, "domain_keywords", [])
+        seniority = get_val(analysis, "seniority_level", "Mid-Level")
+        combined_skills = prim_skills + tools_fw
 
         # Step 3: Query pgvector for high-impact accomplishment exemplars
-        exemplars: Any = fetch_high_impact_exemplars.invoke(f"{effective_role} {' '.join(analysis.primary_skills[:4])}")
+        exemplars: Any = fetch_high_impact_exemplars.invoke(f"{effective_role} {' '.join(prim_skills[:4])}")
 
         # Step 4: Agent 2 - Construct Experience section scaled to target pages
         exp_report: Any = experience_architect_agent.invoke({
             "target_role": effective_role,
-            "seniority_level": analysis.seniority_level,
+            "seniority_level": seniority,
             "target_pages": str(page_count),
             "skills": ", ".join(combined_skills),
-            "keywords": ", ".join(analysis.domain_keywords),
+            "keywords": ", ".join(domain_kws),
             "user_notes": user_notes or "(none provided)",
             "exemplars": exemplars
         })
@@ -69,19 +80,20 @@ class MultiAgentResumeBuilder:
         proj_report: Any = project_specialist_agent.invoke({
             "target_role": effective_role,
             "target_pages": str(page_count),
-            "skills": ", ".join(analysis.primary_skills),
-            "tools": ", ".join(analysis.tools_and_frameworks)
+            "skills": ", ".join(prim_skills),
+            "tools": ", ".join(tools_fw)
         })
 
         # Step 6: Agent 4 - Generate Summary, Education & Certifications
+        exp_list = get_val(exp_report, "experience", [])
         exp_summary_snippet = "\n".join([
-            f"{e.title} at {e.company}: {'; '.join(e.bullets[:2])}"
-            for e in exp_report.experience
+            f"{get_val(e, 'title', '')} at {get_val(e, 'company', '')}: {'; '.join(get_val(e, 'bullets', [])[:2])}"
+            for e in exp_list
         ])
 
         summary_report: Any = summary_education_agent.invoke({
             "target_role": effective_role,
-            "seniority": analysis.seniority_level,
+            "seniority": seniority,
             "target_pages": str(page_count),
             "skills": ", ".join(combined_skills[:10]),
             "exp_summary": exp_summary_snippet,
@@ -90,25 +102,29 @@ class MultiAgentResumeBuilder:
 
         # Step 7: Agent 5 - Reflection & Quality Assurance Loop
         all_draft_bullets = []
-        for e in exp_report.experience:
-            all_draft_bullets.extend(e.bullets)
+        for e in exp_list:
+            all_draft_bullets.extend(get_val(e, "bullets", []))
 
         critic_report: Any = ats_critic_agent.invoke({
             "bullets": "\n".join(all_draft_bullets[:12]),
-            "skills": ", ".join(analysis.primary_skills[:6])
+            "skills": ", ".join(prim_skills[:6])
         })
 
         # Apply improvements from the QA reflection agent
-        replacements = {item.original.strip(): item.improved.strip() for item in critic_report.bullets_improved}
+        replacements = {
+            str(get_val(item, "original", "")).strip(): str(get_val(item, "improved", "")).strip()
+            for item in get_val(critic_report, "bullets_improved", [])
+        }
         refined_experience = []
-        for e in exp_report.experience:
-            refined_bullets = [replacements.get(b.strip(), b) for b in e.bullets]
+        for e in exp_list:
+            e_bullets = get_val(e, "bullets", [])
+            refined_bullets = [replacements.get(str(b).strip(), str(b)) for b in e_bullets]
             refined_experience.append(ExperienceItem(
-                company=e.company,
-                title=e.title,
-                location=e.location or "Remote",
-                start=e.start,
-                end=e.end,
+                company=get_val(e, "company", ""),
+                title=get_val(e, "title", ""),
+                location=get_val(e, "location", "Remote") or "Remote",
+                start=get_val(e, "start", ""),
+                end=get_val(e, "end", ""),
                 bullets=refined_bullets
             ))
 
@@ -119,10 +135,10 @@ class MultiAgentResumeBuilder:
             phone="+1 (555) 019-2834",
             location="San Francisco, CA (Open to Remote)",
             links=["linkedin.com/in/profile", "github.com/profile"],
-            summary=summary_report.summary,
+            summary=get_val(summary_report, "summary", ""),
             skills=combined_skills,
             experience=refined_experience,
-            education=summary_report.education or [
+            education=get_val(summary_report, "education", None) or [
                 EducationItem(
                     school="State University",
                     degree="Bachelor of Science in Computer Science",
@@ -131,8 +147,8 @@ class MultiAgentResumeBuilder:
                     grade="3.8 GPA"
                 )
             ],
-            projects=proj_report.projects,
-            certifications=summary_report.certifications
+            projects=get_val(proj_report, "projects", []),
+            certifications=get_val(summary_report, "certifications", [])
         )
 
         return resume.model_dump()

@@ -10,6 +10,12 @@ from .tools import (
 )
 from db.vector_store import store_embedding, seed_default_knowledge
 
+def get_val(obj: Any, key: str, default: Any = None) -> Any:
+    """Helper to safely access attributes from Pydantic objects or dicts without linter errors."""
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return getattr(obj, key, default)
+
 class MultiAgentResumeOrchestrator:
     """
     Multi-Agent Orchestrator powered by pure LangChain and PostgreSQL pgvector.
@@ -73,7 +79,8 @@ class MultiAgentResumeOrchestrator:
         })
 
         # Step 5: RAG Lookup in PostgreSQL pgvector for high-impact exemplars
-        weak_bullets = rec_report.weak_bullets[:5]
+        rec_weak = get_val(rec_report, "weak_bullets", [])
+        weak_bullets = rec_weak[:5] if rec_weak else []
         if not weak_bullets and candidate_bullets:
             weak_bullets = candidate_bullets[:3]
         if not weak_bullets:
@@ -82,9 +89,10 @@ class MultiAgentResumeOrchestrator:
         exemplars: Any = fetch_high_impact_exemplars.invoke("\n".join(weak_bullets))
 
         # Step 6: Specialized Agent 4 - Resume Optimizer (Rewriter)
+        kw_missing = get_val(kw_report, "missing_keywords", [])
         opt_report: Any = optimizer_agent.invoke({
             "weak_bullets": "\n".join(weak_bullets),
-            "missing_keywords": ", ".join(kw_report.missing_keywords[:6]),
+            "missing_keywords": ", ".join(kw_missing[:6]),
             "exemplars": exemplars
         })
 
@@ -92,9 +100,9 @@ class MultiAgentResumeOrchestrator:
         verified_bullets: List[RewrittenBullet] = []
         metric_pattern = re.compile(r"(\d+[\.,]?\d*[%kMB]?|\$[\d,]+|\b\d+\b|\[X%\])")
 
-        for item in opt_report.rewritten_bullets:
-            orig = item.original.strip()
-            rev = item.improved.strip()
+        for item in get_val(opt_report, "rewritten_bullets", []):
+            orig = str(get_val(item, "original", "")).strip()
+            rev = str(get_val(item, "improved", "")).strip()
 
             # Reflection check: does the rewrite contain a measurable outcome?
             if not metric_pattern.search(rev):
@@ -103,38 +111,44 @@ class MultiAgentResumeOrchestrator:
             verified_bullets.append(RewrittenBullet(original=orig, improved=rev))
 
         # Step 8: Calculate Weighted Overall ATS Score
+        f_score = int(get_val(comp_report, "formatting_score", 70))
+        s_score = int(get_val(comp_report, "sections_score", 70))
+        k_score = int(get_val(kw_report, "keyword_score", 70))
+        i_score = int(get_val(rec_report, "impact_score", 70))
+        r_score = int(get_val(comp_report, "readability_score", 70))
+
         overall_score = int(
-            (comp_report.formatting_score * 0.20) +
-            (comp_report.sections_score * 0.15) +
-            (kw_report.keyword_score * 0.30) +
-            (rec_report.impact_score * 0.25) +
-            (comp_report.readability_score * 0.10)
+            (f_score * 0.20) +
+            (s_score * 0.15) +
+            (k_score * 0.30) +
+            (i_score * 0.25) +
+            (r_score * 0.10)
         )
         overall_score = max(0, min(100, overall_score))
 
         # Step 9: Synthesize Prioritized Issues
         issues: List[Issue] = []
-        for flaw in comp_report.structural_issues:
+        for flaw in get_val(comp_report, "structural_issues", []):
             issues.append(Issue(
                 severity="high",
                 section="Formatting & Structure",
-                problem=flaw,
+                problem=str(flaw),
                 fix="Use standard single-column flow with recognized section titles (Summary, Experience, Education, Skills, Projects)."
             ))
 
-        for flaw in rec_report.critique_notes:
+        for flaw in get_val(rec_report, "critique_notes", []):
             issues.append(Issue(
                 severity="medium",
                 section="Experience & Impact",
-                problem=flaw,
+                problem=str(flaw),
                 fix="Adopt the Google XYZ formula: Action Verb + Project Context + Measurable Outcome ([X%])."
             ))
 
-        if kw_report.missing_keywords:
+        if kw_missing:
             issues.append(Issue(
                 severity="medium",
                 section="Keywords",
-                problem=f"Missing high-demand skills: {', '.join(kw_report.missing_keywords[:4])}",
+                problem=f"Missing high-demand skills: {', '.join(kw_missing[:4])}",
                 fix="Naturally integrate these keywords into your Skills section and relevant project bullet points."
             ))
 
@@ -147,7 +161,8 @@ class MultiAgentResumeOrchestrator:
             print(f"[Orchestrator] Note: Non-critical vector storage notice: {e}")
 
         # Step 11: Compile final ReviewSchema response
-        primary_strength = rec_report.strengths[0] if rec_report.strengths else "solid foundational qualifications"
+        rec_strengths = get_val(rec_report, "strengths", [])
+        primary_strength = rec_strengths[0] if rec_strengths else "solid foundational qualifications"
         summary_text = (
             f"Comprehensive audit conducted by 4 specialized LangChain agents with PostgreSQL pgvector. "
             f"Candidate displays {primary_strength}. "
@@ -157,17 +172,17 @@ class MultiAgentResumeOrchestrator:
         final_review = ReviewSchema(
             atsScore=overall_score,
             breakdown=Breakdown(
-                formatting=comp_report.formatting_score,
-                keywords=kw_report.keyword_score,
-                sections=comp_report.sections_score,
-                impact=rec_report.impact_score,
-                readability=comp_report.readability_score
+                formatting=f_score,
+                keywords=k_score,
+                sections=s_score,
+                impact=i_score,
+                readability=r_score
             ),
             summary=summary_text,
-            strengths=rec_report.strengths or ["Clear chronological progression", "Relevant domain background"],
+            strengths=rec_strengths or ["Clear chronological progression", "Relevant domain background"],
             issues=issues,
-            matchedKeywords=kw_report.matched_keywords,
-            missingKeywords=kw_report.missing_keywords,
+            matchedKeywords=get_val(kw_report, "matched_keywords", []),
+            missingKeywords=kw_missing,
             rewrittenBullets=verified_bullets
         )
 

@@ -65,18 +65,18 @@ def vector_search_skills(job_description: str) -> str:
     if not job_description or len(job_description.strip()) < 20:
         return "No job description provided for vector search."
 
-    matches = semantic_similarity_search(job_description, category="skill", top_k=5)
+    matches: List[Dict[str, Any]] = semantic_similarity_search(job_description, category="skill", top_k=5)
     if not matches:
         return "Standard domain competencies will be extracted via direct semantic analysis."
 
-    return "\n".join([f"- {m['content']} (similarity: {round(m['similarity'], 2)})" for m in matches])
+    return "\n".join([f"- {m.get('content', '')} (similarity: {round(float(m.get('similarity', 0)), 2)})" for m in matches])
 
 @tool
 def fetch_high_impact_exemplars(bullet_context: str) -> str:
     """Queries PostgreSQL pgvector for high-impact exemplar bullet points matching the role or task."""
-    matches = semantic_similarity_search(bullet_context, category="exemplar_bullet", top_k=3)
+    matches: List[Dict[str, Any]] = semantic_similarity_search(bullet_context, category="exemplar_bullet", top_k=3)
     if not matches:
         return "Recruiter Standard: Action Verb + Responsibility/Task + Tech Stack + Measurable Outcome ([X%])."
 
-    return "\n".join([f"- Exemplar: {m['content']}" for m in matches])
+    return "\n".join([f"- Exemplar: {m.get('content', '')}" for m in matches])
 

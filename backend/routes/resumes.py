@@ -11,9 +11,9 @@ def format_row(row):
     if not row:
         return None
     d = dict(row)
-    if "created_at" in d and d["created_at"]:
+    if hasattr(d.get("created_at"), "isoformat"):
         d["created_at"] = d["created_at"].isoformat()
-    if "updated_at" in d and d["updated_at"]:
+    if hasattr(d.get("updated_at"), "isoformat"):
         d["updated_at"] = d["updated_at"].isoformat()
     return d
 
