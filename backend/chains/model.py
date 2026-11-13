@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 # Windows Application Control policy shim for uuid_utils binary DLL
 try:
-    import uuid_utils
+    import uuid_utils  # type: ignore
 except ImportError:
     mod = types.ModuleType("uuid_utils")
     compat = types.ModuleType("uuid_utils.compat")
