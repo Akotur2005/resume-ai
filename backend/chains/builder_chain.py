@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional
+from typing import List, Optional, Any
 from pydantic import BaseModel, Field  # type: ignore
 from langchain_core.prompts import ChatPromptTemplate  # type: ignore
 from langchain_core.output_parsers import StrOutputParser  # type: ignore
@@ -114,7 +114,7 @@ class MultiAgentBulletChain:
             ))
         except Exception as e:
             print(f"[BulletChain] Multi-Agent notice ({e}), running fallback chain...")
-            return str((bullet_prompt | llm | StrOutputParser()).invoke(inputs))
+            return (bullet_prompt | llm | StrOutputParser()).invoke(inputs)
 
 class MultiAgentSummaryChain:
     """Multi-Agent Professional Summary Generator with keyword targeting."""
@@ -133,7 +133,7 @@ class MultiAgentSummaryChain:
             ))
         except Exception as e:
             print(f"[SummaryChain] Multi-Agent notice ({e}), running fallback chain...")
-            return str((summary_prompt | llm | StrOutputParser()).invoke(inputs))
+            return (summary_prompt | llm | StrOutputParser()).invoke(inputs)
 
 class MultiAgentGenerateFromJdChain:
     """Multi-Agent Resume Construction Engine (JD Skills + Experience Architect + Projects + ATS QA)."""

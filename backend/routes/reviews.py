@@ -23,7 +23,8 @@ def upload_review():
         return jsonify({"error": "Attach a PDF as 'resume'"}), 400
         
     file = request.files["resume"]
-    if not file or not file.filename.lower().endswith(".pdf"):
+    filename = getattr(file, "filename", "") or ""
+    if not file or not str(filename).lower().endswith(".pdf"):
         return jsonify({"error": "Only PDF files are supported"}), 400
         
     try:
@@ -48,8 +49,9 @@ def upload_review():
     )
     
     created_at_iso = row["created_at"].isoformat() if row and hasattr(row.get("created_at"), "isoformat") else None
+    review_id = row["id"] if row else None
     response_data = {
-        "id": row["id"],
+        "id": review_id,
         "createdAt": created_at_iso,
         **result
     }
@@ -84,8 +86,9 @@ def builder_review():
     )
     
     created_at_iso = row["created_at"].isoformat() if row and hasattr(row.get("created_at"), "isoformat") else None
+    review_id = row["id"] if row else None
     response_data = {
-        "id": row["id"],
+        "id": review_id,
         "createdAt": created_at_iso,
         **result
     }

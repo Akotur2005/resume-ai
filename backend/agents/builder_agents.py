@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Any
 from pydantic import BaseModel, Field  # type: ignore
 from langchain_core.prompts import ChatPromptTemplate  # type: ignore
 from chains.model import llm  # type: ignore

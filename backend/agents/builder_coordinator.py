@@ -42,7 +42,7 @@ class MultiAgentResumeBuilder:
         Executes collaborative multi-agent workflow to generate a complete ATS-compliant resume from a JD.
         Supports 1-page (compact / standard) and 2-page (comprehensive / senior) generation.
         """
-        page_count = max(1, min(3, int(page_count or 1)))
+        page_count = max(1, min(3, page_count or 1))
 
         # Step 1: Query pgvector for semantic skill context
         vector_insights: Any = vector_search_skills.invoke(job_description)

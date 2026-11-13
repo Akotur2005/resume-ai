@@ -56,7 +56,7 @@ class MultiAgentResumeOrchestrator:
         # Step 1: Tool Executions
         heading_tool_data: Any = audit_ats_headings.invoke(resume_text)
         candidate_bullets: List[str] = self.extract_bullets_from_text(resume_text)
-        metrics_tool_data: Any = audit_action_verbs_and_metrics.invoke(candidate_bullets)
+        metrics_tool_data: Any = audit_action_verbs_and_metrics.invoke({"bullets": candidate_bullets})
         vector_insights: Any = vector_search_skills.invoke(job_description or "")
 
         # Step 2: Specialized Agent 1 - ATS Compliance Agent
