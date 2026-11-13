@@ -19,3 +19,4 @@ echo Starting PostgreSQL (pgvector), Flask Multi-Agent Backend, and React Fronte
 echo.
 docker-compose up --build
 pause
+
