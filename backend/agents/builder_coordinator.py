@@ -1,6 +1,6 @@
 import re
 from typing import Dict, Any, List
-from chains.builder_chain import ResumeSchema, ExperienceItem, ProjectItem, EducationItem
+from chains.builder_chain import ResumeSchema, ExperienceItem, ProjectItem, EducationItem  # type: ignore
 from .builder_agents import (
     jd_analyzer_agent,
     experience_architect_agent,
@@ -9,9 +9,9 @@ from .builder_agents import (
     ats_critic_agent
 )
 from .tools import vector_search_skills, fetch_high_impact_exemplars
-from chains.model import llm
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+from chains.model import llm  # type: ignore
+from langchain_core.prompts import ChatPromptTemplate  # type: ignore
+from langchain_core.output_parsers import StrOutputParser  # type: ignore
 
 class MultiAgentResumeBuilder:
     """

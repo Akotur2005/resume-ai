@@ -16,17 +16,17 @@ except ImportError:
     sys.modules["uuid_utils"] = mod
     sys.modules["uuid_utils.compat"] = compat
 
-from flask import Flask, jsonify, request
-from flask_cors import CORS
+from flask import Flask, jsonify, request  # type: ignore
+from flask_cors import CORS  # type: ignore
 from pathlib import Path
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 
 env_path = Path(__file__).resolve().parent / ".env"
 load_dotenv(dotenv_path=env_path)
 load_dotenv()
 
-from routes.resumes import resumes_bp
-from routes.reviews import reviews_bp
+from routes.resumes import resumes_bp  # type: ignore
+from routes.reviews import reviews_bp  # type: ignore
 
 app = Flask(__name__)
 

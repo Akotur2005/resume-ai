@@ -1,7 +1,7 @@
 from typing import List
-from pydantic import BaseModel, Field
-from langchain_core.prompts import ChatPromptTemplate
-from chains.model import llm
+from pydantic import BaseModel, Field  # type: ignore
+from langchain_core.prompts import ChatPromptTemplate  # type: ignore
+from chains.model import llm  # type: ignore
 
 # ==============================================================================
 # Agent 1: ATS Compliance Specialist (Layout, Parser Compatibility, Headings)

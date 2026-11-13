@@ -1,6 +1,6 @@
 import json
-from flask import Blueprint, request, jsonify
-from psycopg2.extras import Json
+from flask import Blueprint, request, jsonify  # type: ignore
+from psycopg2.extras import Json  # type: ignore
 from db import query
 from utils.pdf_utils import extract_text_from_pdf, resume_to_text
 from chains.review_chain import review_resume

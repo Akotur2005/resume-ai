@@ -1,6 +1,6 @@
 import io
 import re
-from pypdf import PdfReader
+from pypdf import PdfReader  # type: ignore
 
 def extract_text_from_pdf(file_bytes_or_stream):
     """Extract clean text from PDF bytes or file-like object."""

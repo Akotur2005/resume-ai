@@ -1,7 +1,10 @@
 from typing import List, Literal, Optional
-from pydantic import BaseModel, Field
-from langchain_core.prompts import ChatPromptTemplate
-from .model import llm
+from pydantic import BaseModel, Field  # type: ignore
+from langchain_core.prompts import ChatPromptTemplate  # type: ignore
+try:
+    from chains.model import llm  # type: ignore
+except ImportError:
+    from .model import llm  # type: ignore
 
 class Breakdown(BaseModel):
     formatting: int = Field(ge=0, le=100)

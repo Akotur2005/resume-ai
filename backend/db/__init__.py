@@ -1,12 +1,12 @@
 import os
-import psycopg2
-from psycopg2.pool import ThreadedConnectionPool
-from psycopg2.extras import RealDictCursor, Json
+import psycopg2  # type: ignore
+from psycopg2.pool import ThreadedConnectionPool  # type: ignore
+from psycopg2.extras import RealDictCursor, Json  # type: ignore
 from contextlib import contextmanager
 from pathlib import Path
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 
-env_path = Path(__file__).resolve().parent / ".env"
+env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 load_dotenv()
 
@@ -45,3 +45,6 @@ def query(sql, params=None, fetch_one=False, fetch_all=False, commit=False):
         if fetch_all:
             return cur.fetchall()
         return None
+
+__all__ = ["get_pool", "get_db_cursor", "query", "DATABASE_URL"]
+

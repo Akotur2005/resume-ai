@@ -1,6 +1,6 @@
 import re
 from typing import List, Dict, Any
-from langchain_core.tools import tool
+from langchain_core.tools import tool  # type: ignore
 from db.vector_store import semantic_similarity_search
 
 STANDARD_HEADINGS = ["summary", "experience", "education", "skills", "projects", "certifications"]

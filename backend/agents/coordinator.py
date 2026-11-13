@@ -1,6 +1,6 @@
 import re
 from typing import List, Dict, Any, Optional
-from chains.review_chain import ReviewSchema, Breakdown, Issue, RewrittenBullet
+from chains.review_chain import ReviewSchema, Breakdown, Issue, RewrittenBullet  # type: ignore
 from .specialists import compliance_agent, keyword_agent, recruiter_agent, optimizer_agent
 from .tools import (
     audit_ats_headings, 

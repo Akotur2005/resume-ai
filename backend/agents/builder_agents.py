@@ -1,8 +1,8 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field
-from langchain_core.prompts import ChatPromptTemplate
-from chains.model import llm
-from chains.builder_chain import ExperienceItem, EducationItem, ProjectItem, ResumeSchema
+from pydantic import BaseModel, Field  # type: ignore
+from langchain_core.prompts import ChatPromptTemplate  # type: ignore
+from chains.model import llm  # type: ignore
+from chains.builder_chain import ExperienceItem, EducationItem, ProjectItem, ResumeSchema  # type: ignore
 
 # ==============================================================================
 # Agent 1: JD Requirements & Skill Extraction Agent

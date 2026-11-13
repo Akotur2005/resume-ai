@@ -18,7 +18,7 @@ except ImportError:
     sys.modules["uuid_utils"] = mod
     sys.modules["uuid_utils.compat"] = compat
 
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings  # type: ignore
 
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
@@ -45,5 +45,6 @@ llm = ChatGoogleGenerativeAI(
 # Shared Embeddings client for pgvector (768 dimensions)
 embeddings = GoogleGenerativeAIEmbeddings(
     google_api_key=api_key,
-    model="models/text-embedding-004",
+    model="models/gemini-embedding-001",
+    output_dimensionality=768,
 )

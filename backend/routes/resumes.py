@@ -1,6 +1,6 @@
 import json
-from flask import Blueprint, request, jsonify
-from psycopg2.extras import Json
+from flask import Blueprint, request, jsonify  # type: ignore
+from psycopg2.extras import Json  # type: ignore
 from db import query
 from chains.builder_chain import bullet_chain, summary_chain, generate_from_jd_chain
 

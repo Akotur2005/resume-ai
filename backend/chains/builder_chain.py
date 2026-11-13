@@ -1,9 +1,12 @@
 import re
 from typing import List, Optional
-from pydantic import BaseModel, Field
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from .model import llm
+from pydantic import BaseModel, Field  # type: ignore
+from langchain_core.prompts import ChatPromptTemplate  # type: ignore
+from langchain_core.output_parsers import StrOutputParser  # type: ignore
+try:
+    from chains.model import llm  # type: ignore
+except ImportError:
+    from .model import llm  # type: ignore
 
 # ---- Structured resume schema for parser and generator ----
 class ExperienceItem(BaseModel):
