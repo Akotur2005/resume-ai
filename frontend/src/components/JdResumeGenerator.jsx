@@ -19,6 +19,7 @@ export default function JdResumeGenerator({ onEditInBuilder }) {
   const [targetTitle, setTargetTitle] = useState("");
   const [fullName, setFullName] = useState("");
   const [userNotes, setUserNotes] = useState("");
+  const [pageCount, setPageCount] = useState(1);
   const [generatedResume, setGeneratedResume] = useState(null);
   const [review, setReview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -51,6 +52,7 @@ export default function JdResumeGenerator({ onEditInBuilder }) {
         targetTitle,
         fullName,
         userNotes,
+        pageCount,
       });
       setGeneratedResume(data);
       setSavedId(null);
@@ -164,6 +166,48 @@ export default function JdResumeGenerator({ onEditInBuilder }) {
               onChange={(e) => setUserNotes(e.target.value)}
               placeholder="Paste your past experience, skills, projects or rough points for AI to incorporate..."
             />
+          </div>
+
+          <div style={{ marginTop: "12px" }}>
+            <label style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: 500, display: "block", marginBottom: "6px" }}>
+              Target Resume Length & Experience Scope
+            </label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <button
+                type="button"
+                onClick={() => setPageCount(1)}
+                style={{
+                  padding: "9px 12px",
+                  fontSize: "12.5px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  border: pageCount === 1 ? "1.5px solid #3b82f6" : "1px solid var(--border-subtle)",
+                  background: pageCount === 1 ? "rgba(59, 130, 246, 0.15)" : "var(--bg-main)",
+                  color: pageCount === 1 ? "#60a5fa" : "var(--text-secondary)",
+                  fontWeight: pageCount === 1 ? 600 : 400,
+                  textAlign: "center"
+                }}
+              >
+                📄 1 Page (Standard / 0-5 Yrs)
+              </button>
+              <button
+                type="button"
+                onClick={() => setPageCount(2)}
+                style={{
+                  padding: "9px 12px",
+                  fontSize: "12.5px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  border: pageCount === 2 ? "1.5px solid #8b5cf6" : "1px solid var(--border-subtle)",
+                  background: pageCount === 2 ? "rgba(139, 92, 246, 0.15)" : "var(--bg-main)",
+                  color: pageCount === 2 ? "#c084fc" : "var(--text-secondary)",
+                  fontWeight: pageCount === 2 ? 600 : 400,
+                  textAlign: "center"
+                }}
+              >
+                📄📄 2 Pages (Senior / 5+ Yrs)
+              </button>
+            </div>
           </div>
 
           <button

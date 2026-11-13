@@ -135,12 +135,14 @@ def ai_from_jd():
     user_notes = body.get("userNotes", "")
     full_name = body.get("fullName", "") or "Your Name"
     target_title = body.get("targetTitle", "")
+    page_count = int(body.get("pageCount", 1))
     
     resume_data = generate_from_jd_chain.invoke({
         "jobDescription": job_description,
         "userNotes": user_notes,
         "fullName": full_name,
         "targetTitle": target_title,
+        "pageCount": page_count,
     })
     
     result = resume_data.model_dump() if hasattr(resume_data, "model_dump") else dict(resume_data)

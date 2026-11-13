@@ -85,11 +85,56 @@ The reviewer accepts uploaded PDF resumes and evaluates their quality and compat
 |---|---|---|
 | **Frontend** | React 18, Vite | Component architecture, form management, real-time live preview |
 | **Backend** | Python, Flask, Flask-CORS | REST API routing, CORS handling, multipart file uploads |
-| **AI Orchestration** | LangChain, LangChain Core | LCEL prompt chaining, model abstraction, structured parsing |
-| **LLM Provider** | Google Gemini (`gemini-2.5-flash`) | Natural language processing, scoring, and text generation |
+| **Multi-Agent AI** | LangChain, LangChain Core | 4 Specialized Agents + Coordinator, Reflection & Validation Loop |
+| **LLM Provider** | Google Gemini (`gemini-2.5-flash`) | Natural language reasoning, scoring, and text generation |
+| **Vector DB** | PostgreSQL (`pgvector`) | Semantic skill matching & RAG high-impact bullet exemplar retrieval |
+| **Embeddings** | `GoogleGenerativeAIEmbeddings` (`text-embedding-004`) | 768-dim embeddings for vector similarity search |
 | **Schema Validation**| Pydantic v2 | Strict JSON schema definitions for model responses |
 | **PDF Processing** | `pypdf` | Server-side text extraction from PDF documents |
 | **Database** | PostgreSQL, `psycopg2` | Relational storage, JSONB document fields, connection pooling |
+
+---
+
+## Multi-Agent Architecture (Pure LangChain + PostgreSQL pgvector)
+
+The review engine is orchestrated by **`MultiAgentResumeOrchestrator`**, coordinating 4 specialized LangChain agents and a reflection/self-correction loop backed by PostgreSQL `pgvector`:
+
+1. **ATS Compliance Agent (`agents/specialists.py`):**
+   - Audits mechanical layout, parseability, standard headings, and reverse-chronological date flow.
+   - Uses the `audit_ats_headings` tool.
+
+2. **Semantic Keyword Strategist (`agents/specialists.py`):**
+   - Compares the resume against the job description using PostgreSQL `pgvector` semantic similarity.
+   - Detects technical competencies, exact keyword coverage, and high-priority skill gaps.
+
+3. **Executive Recruiter Agent (`agents/specialists.py`):**
+   - Evaluates accomplishment statements against the Google XYZ formula: *"Accomplished [X] measured by [Y] by doing [Z]"*.
+   - Flags weak action verbs and bullets lacking measurable metrics via the `audit_action_verbs_and_metrics` tool.
+
+4. **RAG-Augmented Resume Optimizer (`agents/specialists.py`):**
+   - Retrieves top-performing bullet exemplars from the PostgreSQL Vector Database via `fetch_high_impact_exemplars`.
+   - Rewrites weak bullets into metric-driven statements incorporating missing skills.
+
+5. **Supervisor Reflection & Quality Gate (`agents/coordinator.py`):**
+   - Audits the Optimizer's rewrites to verify that action verbs and metrics are preserved.
+   - Computes a weighted ATS score (0-100) and indexes the resume chunk into PostgreSQL `resume_vectors`.
+
+---
+
+## Multi-Agent Resume Builder Engine (`agents/builder_coordinator.py`)
+
+The builder engine features an autonomous multi-agent pipeline for tailored resume generation and bullet optimization:
+
+1. **JD Requirements & Skills Agent (`agents/builder_agents.py`):**
+   - Analyzes Job Descriptions using PostgreSQL `pgvector` semantic matching to extract must-have tech skills, tools, and domain keywords.
+2. **Accomplishment & Experience Architect Agent (`agents/builder_agents.py`):**
+   - Constructs realistic job histories and accomplishment statements using Google's XYZ metric formula, guided by `pgvector` RAG bullet exemplars.
+3. **Technical Project Specialist Agent (`agents/builder_agents.py`):**
+   - Synthesizes modern, production-grade showcase projects tailored to the required tech stack.
+4. **Summary & Credentials Strategist Agent (`agents/builder_agents.py`):**
+   - Generates first-person-implied professional summaries with high keyword alignment, plus recommended certifications and degrees.
+5. **ATS Quality Assurance & Reflection Agent (`agents/builder_agents.py`):**
+   - Critiques the assembled draft, enforces action verbs and quantifiable metrics (`[X%]`), and refines weak bullets before final output.
 
 ---
 

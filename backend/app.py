@@ -1,5 +1,22 @@
 import os
 import re
+import sys
+import types
+import uuid
+
+# Windows Application Control policy shim for uuid_utils binary DLL
+try:
+    import uuid_utils
+except ImportError:
+    mod = types.ModuleType("uuid_utils")
+    compat = types.ModuleType("uuid_utils.compat")
+    compat.uuid7 = lambda *args, **kwargs: uuid.uuid4()
+    mod.compat = compat
+    mod.UUID = uuid.UUID
+    mod.uuid7 = compat.uuid7
+    sys.modules["uuid_utils"] = mod
+    sys.modules["uuid_utils.compat"] = compat
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from pathlib import Path

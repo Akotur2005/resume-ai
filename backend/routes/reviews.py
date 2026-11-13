@@ -73,7 +73,7 @@ def builder_review():
         return jsonify({"error": "Provide resumeId or data"}), 400
         
     text = resume_to_text(resume_data)
-    result = review_resume(text, job_description)
+    result = review_resume(text, job_description, resume_id=resume_id)
     
     row = query(
         """INSERT INTO reviews (resume_id, source, resume_text, job_description, ats_score, result)

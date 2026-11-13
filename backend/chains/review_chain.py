@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 from .model import llm
@@ -57,16 +57,34 @@ JOB DESCRIPTION (may be empty):
     ),
 ])
 
-# LangChain LCEL pipeline with structured Pydantic output
+# LangChain LCEL pipeline fallback
 review_chain = prompt | llm.with_structured_output(ReviewSchema)
 
-def review_resume(resume: str, job_description: str = "") -> dict:
-    result = review_chain.invoke({
-        "resume": resume,
-        "jobDescription": job_description or "(none provided)"
-    })
-    if hasattr(result, "model_dump"):
-        return result.model_dump()
-    if isinstance(result, dict):
-        return result
-    return result.dict()
+_orchestrator = None
+
+def get_orchestrator():
+    global _orchestrator
+    if _orchestrator is None:
+        from agents.coordinator import MultiAgentResumeOrchestrator
+        _orchestrator = MultiAgentResumeOrchestrator()
+    return _orchestrator
+
+def review_resume(resume: str, job_description: str = "", resume_id: Optional[int] = None) -> dict:
+    """
+    Executes the Multi-Agent review pipeline (4 specialized agents + pgvector search + reflection loop).
+    Falls back gracefully to the single chain if needed.
+    """
+    try:
+        orchestrator = get_orchestrator()
+        return orchestrator.analyze(resume_text=resume, job_description=job_description, resume_id=resume_id)
+    except Exception as e:
+        print(f"[ReviewChain] Multi-Agent Orchestrator notice ({e}), running fallback chain...")
+        result = review_chain.invoke({
+            "resume": resume,
+            "jobDescription": job_description or "(none provided)"
+        })
+        if hasattr(result, "model_dump"):
+            return result.model_dump()
+        if isinstance(result, dict):
+            return result
+        return result.dict()

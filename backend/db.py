@@ -14,10 +14,17 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL is not set in environment variables")
 
-pool = ThreadedConnectionPool(minconn=1, maxconn=10, dsn=DATABASE_URL)
+_pool = None
+
+def get_pool():
+    global _pool
+    if _pool is None:
+        _pool = ThreadedConnectionPool(minconn=1, maxconn=10, dsn=DATABASE_URL)
+    return _pool
 
 @contextmanager
 def get_db_cursor(commit=False):
+    pool = get_pool()
     conn = pool.getconn()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:

@@ -1,44 +1,11 @@
+import re
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from .model import llm
 
-# ---- Chain A: improve a single experience/project bullet ----
-bullet_prompt = ChatPromptTemplate.from_messages([
-    (
-        "system",
-        """You rewrite resume bullets for ATS. Output ONE bullet only, no quotes, no dash.
-Format: strong action verb + what you did + tool/tech + measurable result.
-Max 25 words. Do not invent numbers: if none are given, use a placeholder like [X%].""",
-    ),
-    (
-        "human",
-        "Role: {role}\nTarget job: {targetRole}\nRaw bullet: {bullet}",
-    ),
-])
-
-bullet_chain = bullet_prompt | llm | StrOutputParser()
-
-
-# ---- Chain B: generate a professional summary from structured resume data ----
-summary_prompt = ChatPromptTemplate.from_messages([
-    (
-        "system",
-        """Write a 3-sentence ATS-friendly professional summary in first-person-implied style
-(no "I"). Include years of experience, core skills, and one achievement.
-Plain text only. Use keywords from the target role.""",
-    ),
-    (
-        "human",
-        "Target role: {targetRole}\nSkills: {skills}\nExperience:\n{experience}",
-    ),
-])
-
-summary_chain = summary_prompt | llm | StrOutputParser()
-
-
-# ---- Chain C & D: Structured resume schema for parser and generator ----
+# ---- Structured resume schema for parser and generator ----
 class ExperienceItem(BaseModel):
     company: str = ""
     title: str = ""
@@ -73,6 +40,33 @@ class ResumeSchema(BaseModel):
     certifications: List[str] = Field(default_factory=list)
 
 
+# ---- Fallback prompts for basic chains ----
+bullet_prompt = ChatPromptTemplate.from_messages([
+    (
+        "system",
+        """You rewrite resume bullets for ATS. Output ONE bullet only, no quotes, no dash.
+Format: strong action verb + what you did + tool/tech + measurable result.
+Max 25 words. Do not invent numbers: if none are given, use a placeholder like [X%].""",
+    ),
+    (
+        "human",
+        "Role: {role}\nTarget job: {targetRole}\nRaw bullet: {bullet}",
+    ),
+])
+
+summary_prompt = ChatPromptTemplate.from_messages([
+    (
+        "system",
+        """Write a 3-sentence ATS-friendly professional summary in first-person-implied style
+(no "I"). Include years of experience, core skills, and one achievement.
+Plain text only. Use keywords from the target role.""",
+    ),
+    (
+        "human",
+        "Target role: {targetRole}\nSkills: {skills}\nExperience:\n{experience}",
+    ),
+])
+
 parse_prompt = ChatPromptTemplate.from_messages([
     (
         "system",
@@ -83,26 +77,78 @@ parse_prompt = ChatPromptTemplate.from_messages([
 
 parse_chain = parse_prompt | llm.with_structured_output(ResumeSchema)
 
-
 generate_from_jd_prompt = ChatPromptTemplate.from_messages([
     (
         "system",
         """You are an elite ATS resume builder and career strategist.
-Your mission is to craft a complete, top-tier, 100% ATS-optimized resume tailored directly to the provided Job Description.
-
-ATS Guidelines to strictly follow:
-1. Contact Info: Use the candidate name if provided; otherwise use "Your Name". Provide clean placeholder contact info if not provided.
-2. Professional Summary: 3-4 concise, impactful sentences in first-person-implied style packed with exact keywords, relevant technologies, and core competencies required by the job.
-3. Skills: Group or list all high-priority hard skills, frameworks, databases, cloud tools, and key methodologies explicitly requested in the JD.
-4. Experience: Generate 2-3 realistic, high-impact job positions directly relevant to the role. For each position, provide 3-4 bullet points starting with strong action verbs (e.g. Engineered, Architected, Spearheaded, Accelerated), embedding relevant technologies and quantifiable outcomes ([X%], latency reduction, cost savings, user scale).
-5. Projects: Include 2 realistic, technically impressive projects that showcase the demanded tech stack.
-6. Education & Certifications: Include appropriate degree, major, and standard industry certifications looked for by ATS scanners.
-7. Candidate Context: If the candidate provided any notes, past experience, or skills, align and incorporate their background to best match the JD without fabricating impossible credentials. If no personal notes are provided, generate a competitive profile tailored for the role.""",
+Craft a complete, top-tier, 100% ATS-optimized resume tailored directly to the provided Job Description.""",
     ),
     (
         "human",
-        "JOB DESCRIPTION:\n{jobDescription}\n\nCANDIDATE NOTES / BACKGROUND (optional):\n{userNotes}\n\nCANDIDATE NAME (optional):\n{fullName}\n\nTARGET JOB TITLE (optional):\n{targetTitle}",
+        "JOB DESCRIPTION:\n{jobDescription}\n\nCANDIDATE NOTES / BACKGROUND:\n{userNotes}\n\nCANDIDATE NAME:\n{fullName}\n\nTARGET JOB TITLE:\n{targetTitle}",
     ),
 ])
 
-generate_from_jd_chain = generate_from_jd_prompt | llm.with_structured_output(ResumeSchema)
+# ---- Multi-Agent Coordinators ----
+_builder = None
+
+def get_builder():
+    global _builder
+    if _builder is None:
+        from agents.builder_coordinator import MultiAgentResumeBuilder
+        _builder = MultiAgentResumeBuilder()
+    return _builder
+
+class MultiAgentBulletChain:
+    """Multi-Agent Bullet Optimizer using pgvector RAG exemplars and reflection verification."""
+    def invoke(self, inputs: dict) -> str:
+        try:
+            builder = get_builder()
+            return builder.improve_bullet(
+                bullet=inputs.get("bullet", ""),
+                role=inputs.get("role", ""),
+                target_role=inputs.get("targetRole", "")
+            )
+        except Exception as e:
+            print(f"[BulletChain] Multi-Agent notice ({e}), running fallback chain...")
+            return (bullet_prompt | llm | StrOutputParser()).invoke(inputs)
+
+class MultiAgentSummaryChain:
+    """Multi-Agent Professional Summary Generator with keyword targeting."""
+    def invoke(self, inputs: dict) -> str:
+        try:
+            builder = get_builder()
+            skills_input = inputs.get("skills", "")
+            if isinstance(skills_input, str):
+                skills_list = [s.strip() for s in skills_input.split(",") if s.strip()]
+            else:
+                skills_list = list(skills_input or [])
+            return builder.generate_summary(
+                target_role=inputs.get("targetRole", ""),
+                skills=skills_list,
+                experience=inputs.get("experience", "")
+            )
+        except Exception as e:
+            print(f"[SummaryChain] Multi-Agent notice ({e}), running fallback chain...")
+            return (summary_prompt | llm | StrOutputParser()).invoke(inputs)
+
+class MultiAgentGenerateFromJdChain:
+    """Multi-Agent Resume Construction Engine (JD Skills + Experience Architect + Projects + ATS QA)."""
+    def invoke(self, inputs: dict):
+        try:
+            builder = get_builder()
+            return builder.generate_from_jd(
+                job_description=inputs.get("jobDescription", ""),
+                user_notes=inputs.get("userNotes", ""),
+                full_name=inputs.get("fullName", "Your Name"),
+                target_title=inputs.get("targetTitle", ""),
+                page_count=inputs.get("pageCount", 1)
+            )
+        except Exception as e:
+            print(f"[GenerateFromJd] Multi-Agent notice ({e}), running fallback chain...")
+            return (generate_from_jd_prompt | llm.with_structured_output(ResumeSchema)).invoke(inputs)
+
+# Exported chains hooked to the Multi-Agent system
+bullet_chain = MultiAgentBulletChain()
+summary_chain = MultiAgentSummaryChain()
+generate_from_jd_chain = MultiAgentGenerateFromJdChain()

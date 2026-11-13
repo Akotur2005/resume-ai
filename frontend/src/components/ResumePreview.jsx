@@ -30,16 +30,31 @@ export default function ResumePreview({ r }) {
         <section>
           <h2>EXPERIENCE</h2>
           {r.experience.map((e, i) => (
-            <div key={i} className="entry">
-              <p className="row">
-                <strong>{e.title}{e.company && `, ${e.company}`}</strong>
-                <span>{[e.start, e.end].filter(Boolean).join(" - ")}</span>
-              </p>
-              {e.location && <p className="muted">{e.location}</p>}
-              <ul>{(e.bullets || []).filter(Boolean).map((b, j) => <li key={j}>{b}</li>)}</ul>
+            <div key={i}>
+              <div className="entry">
+                <p className="row">
+                  <strong>{e.title}{e.company && `, ${e.company}`}</strong>
+                  <span>{[e.start, e.end].filter(Boolean).join(" - ")}</span>
+                </p>
+                {e.location && <p className="muted">{e.location}</p>}
+                <ul>{(e.bullets || []).filter(Boolean).map((b, j) => <li key={j}>{b}</li>)}</ul>
+              </div>
+              {/* Intelligent page-break guide for 2-page layouts */}
+              {i === 1 && r.experience.length >= 4 && (
+                <div className="page-break-guide no-print">
+                  <span>Page 2 Begins</span>
+                </div>
+              )}
             </div>
           ))}
         </section>
+      )}
+
+      {/* Page-break guide if 3 roles + multiple projects */}
+      {r.experience?.length === 3 && r.projects?.length >= 2 && (
+        <div className="page-break-guide no-print">
+          <span>Page 2 Begins</span>
+        </div>
       )}
 
       {r.projects?.length > 0 && (

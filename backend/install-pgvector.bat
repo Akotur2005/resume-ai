@@ -1,3 +1,4 @@
+
 @echo off
 echo ==============================================
 echo Installing pgvector for PostgreSQL 18...
