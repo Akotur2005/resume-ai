@@ -39,10 +39,10 @@ class MultiAgentResumeBuilder:
         page_count = max(1, min(3, int(page_count or 1)))
 
         # Step 1: Query pgvector for semantic skill context
-        vector_insights = vector_search_skills.invoke(job_description)
+        vector_insights: Any = vector_search_skills.invoke(job_description)
 
         # Step 2: Agent 1 - Extract role & skills
-        analysis = jd_analyzer_agent.invoke({
+        analysis: Any = jd_analyzer_agent.invoke({
             "job_description": job_description,
             "target_title": target_title or "Target Role",
             "vector_insights": str(vector_insights)
@@ -52,10 +52,10 @@ class MultiAgentResumeBuilder:
         combined_skills = analysis.primary_skills + analysis.tools_and_frameworks
 
         # Step 3: Query pgvector for high-impact accomplishment exemplars
-        exemplars = fetch_high_impact_exemplars.invoke(f"{effective_role} {' '.join(analysis.primary_skills[:4])}")
+        exemplars: Any = fetch_high_impact_exemplars.invoke(f"{effective_role} {' '.join(analysis.primary_skills[:4])}")
 
         # Step 4: Agent 2 - Construct Experience section scaled to target pages
-        exp_report = experience_architect_agent.invoke({
+        exp_report: Any = experience_architect_agent.invoke({
             "target_role": effective_role,
             "seniority_level": analysis.seniority_level,
             "target_pages": str(page_count),
@@ -66,7 +66,7 @@ class MultiAgentResumeBuilder:
         })
 
         # Step 5: Agent 3 - Generate showcase projects scaled to target pages
-        proj_report = project_specialist_agent.invoke({
+        proj_report: Any = project_specialist_agent.invoke({
             "target_role": effective_role,
             "target_pages": str(page_count),
             "skills": ", ".join(analysis.primary_skills),
@@ -79,7 +79,7 @@ class MultiAgentResumeBuilder:
             for e in exp_report.experience
         ])
 
-        summary_report = summary_education_agent.invoke({
+        summary_report: Any = summary_education_agent.invoke({
             "target_role": effective_role,
             "seniority": analysis.seniority_level,
             "target_pages": str(page_count),
@@ -93,7 +93,7 @@ class MultiAgentResumeBuilder:
         for e in exp_report.experience:
             all_draft_bullets.extend(e.bullets)
 
-        critic_report = ats_critic_agent.invoke({
+        critic_report: Any = ats_critic_agent.invoke({
             "bullets": "\n".join(all_draft_bullets[:12]),
             "skills": ", ".join(analysis.primary_skills[:6])
         })
@@ -161,12 +161,13 @@ Rewrite the candidate's raw bullet into an ATS-winning accomplishment statement:
         ])
 
         chain = bullet_prompt | llm | StrOutputParser()
-        draft = chain.invoke({
+        draft: Any = chain.invoke({
             "role": role or "Software Engineer",
             "targetRole": target_role or role or "Target Role",
             "bullet": bullet,
             "exemplars": exemplars
-        }).strip()
+        })
+        draft = str(draft).strip()
 
         # Reflection check: Ensure metric exists
         if not re.search(r"(\d+[%kMB]?|\$[\d,]+|\[X%\])", draft):

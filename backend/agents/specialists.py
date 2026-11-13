@@ -28,7 +28,7 @@ Be honest and rigorous in your evaluation."""
     )
 ])
 
-compliance_agent = compliance_prompt | llm.with_structured_output(ComplianceReport)
+compliance_agent: Any = compliance_prompt | llm.with_structured_output(ComplianceReport)
 
 
 # ==============================================================================
@@ -55,7 +55,7 @@ If no Job Description is provided, evaluate against industry expectations for th
     )
 ])
 
-keyword_agent = keyword_prompt | llm.with_structured_output(KeywordReport)
+keyword_agent: Any = keyword_prompt | llm.with_structured_output(KeywordReport)
 
 
 # ==============================================================================
@@ -83,7 +83,7 @@ Your mission is to audit candidate accomplishments using the Google XYZ Formula:
     )
 ])
 
-recruiter_agent = recruiter_prompt | llm.with_structured_output(RecruiterReport)
+recruiter_agent: Any = recruiter_prompt | llm.with_structured_output(RecruiterReport)
 
 
 # ==============================================================================
@@ -112,5 +112,5 @@ Your mission is to rewrite weak resume bullets into top-tier, high-impact statem
     )
 ])
 
-optimizer_agent = optimizer_prompt | llm.with_structured_output(OptimizerReport)
+optimizer_agent: Any = optimizer_prompt | llm.with_structured_output(OptimizerReport)
 

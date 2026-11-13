@@ -32,7 +32,7 @@ Incorporate the PostgreSQL pgvector semantic context provided to identify relate
     )
 ])
 
-jd_analyzer_agent = jd_analyzer_prompt | llm.with_structured_output(JdSkillAnalysis)
+jd_analyzer_agent: Any = jd_analyzer_prompt | llm.with_structured_output(JdSkillAnalysis)
 
 
 # ==============================================================================
@@ -68,7 +68,7 @@ HIGH-IMPACT EXEMPLARS FROM POSTGRESQL PGVECTOR (RAG):
     )
 ])
 
-experience_architect_agent = experience_architect_prompt | llm.with_structured_output(ExperienceGeneration)
+experience_architect_agent: Any = experience_architect_prompt | llm.with_structured_output(ExperienceGeneration)
 
 
 # ==============================================================================
@@ -94,7 +94,7 @@ Provide 2-3 bullet points per project demonstrating architecture, scalability, a
     )
 ])
 
-project_specialist_agent = project_specialist_prompt | llm.with_structured_output(ProjectsGeneration)
+project_specialist_agent: Any = project_specialist_prompt | llm.with_structured_output(ProjectsGeneration)
 
 
 # ==============================================================================
@@ -121,7 +121,7 @@ Draft an elite ATS-optimized Professional Summary and recommend standard educati
     )
 ])
 
-summary_education_agent = summary_education_prompt | llm.with_structured_output(SummaryAndEducation)
+summary_education_agent: Any = summary_education_prompt | llm.with_structured_output(SummaryAndEducation)
 
 
 # ==============================================================================
@@ -150,4 +150,4 @@ Inspect the assembled resume draft against strict ATS standards:
     )
 ])
 
-ats_critic_agent = ats_critic_prompt | llm.with_structured_output(QualityAuditReport)
+ats_critic_agent: Any = ats_critic_prompt | llm.with_structured_output(QualityAuditReport)

@@ -48,26 +48,26 @@ class MultiAgentResumeOrchestrator:
         6. Vector Database Indexing
         """
         # Step 1: Tool Executions
-        heading_tool_data = audit_ats_headings.invoke(resume_text)
-        candidate_bullets = self.extract_bullets_from_text(resume_text)
-        metrics_tool_data = audit_action_verbs_and_metrics.invoke(candidate_bullets)
-        vector_insights = vector_search_skills.invoke(job_description or "")
+        heading_tool_data: Any = audit_ats_headings.invoke(resume_text)
+        candidate_bullets: List[str] = self.extract_bullets_from_text(resume_text)
+        metrics_tool_data: Any = audit_action_verbs_and_metrics.invoke(candidate_bullets)
+        vector_insights: Any = vector_search_skills.invoke(job_description or "")
 
         # Step 2: Specialized Agent 1 - ATS Compliance Agent
-        comp_report = compliance_agent.invoke({
+        comp_report: Any = compliance_agent.invoke({
             "resume": resume_text,
             "heading_tool_data": str(heading_tool_data)
         })
 
         # Step 3: Specialized Agent 2 - Semantic Keyword Strategist
-        kw_report = keyword_agent.invoke({
+        kw_report: Any = keyword_agent.invoke({
             "resume": resume_text,
             "job_description": job_description or "(none provided)",
             "vector_insights": str(vector_insights)
         })
 
         # Step 4: Specialized Agent 3 - Executive Recruiter & Impact Coach
-        rec_report = recruiter_agent.invoke({
+        rec_report: Any = recruiter_agent.invoke({
             "resume": resume_text,
             "metrics_tool_data": str(metrics_tool_data)
         })
@@ -79,10 +79,10 @@ class MultiAgentResumeOrchestrator:
         if not weak_bullets:
             weak_bullets = ["Managed day-to-day software development and assisted team with application deployment."]
 
-        exemplars = fetch_high_impact_exemplars.invoke("\n".join(weak_bullets))
+        exemplars: Any = fetch_high_impact_exemplars.invoke("\n".join(weak_bullets))
 
         # Step 6: Specialized Agent 4 - Resume Optimizer (Rewriter)
-        opt_report = optimizer_agent.invoke({
+        opt_report: Any = optimizer_agent.invoke({
             "weak_bullets": "\n".join(weak_bullets),
             "missing_keywords": ", ".join(kw_report.missing_keywords[:6]),
             "exemplars": exemplars

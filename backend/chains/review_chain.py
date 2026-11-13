@@ -78,7 +78,7 @@ def review_resume(resume: str, job_description: str = "", resume_id: Optional[in
     Falls back gracefully to the single chain if needed.
     """
     try:
-        orchestrator = get_orchestrator()
+        orchestrator: Any = get_orchestrator()
         return orchestrator.analyze(resume_text=resume, job_description=job_description, resume_id=resume_id)
     except Exception as e:
         print(f"[ReviewChain] Multi-Agent Orchestrator notice ({e}), running fallback chain...")

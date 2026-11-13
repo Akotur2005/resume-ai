@@ -106,40 +106,40 @@ class MultiAgentBulletChain:
     """Multi-Agent Bullet Optimizer using pgvector RAG exemplars and reflection verification."""
     def invoke(self, inputs: dict) -> str:
         try:
-            builder = get_builder()
-            return builder.improve_bullet(
+            builder: Any = get_builder()
+            return str(builder.improve_bullet(
                 bullet=inputs.get("bullet", ""),
                 role=inputs.get("role", ""),
                 target_role=inputs.get("targetRole", "")
-            )
+            ))
         except Exception as e:
             print(f"[BulletChain] Multi-Agent notice ({e}), running fallback chain...")
-            return (bullet_prompt | llm | StrOutputParser()).invoke(inputs)
+            return str((bullet_prompt | llm | StrOutputParser()).invoke(inputs))
 
 class MultiAgentSummaryChain:
     """Multi-Agent Professional Summary Generator with keyword targeting."""
     def invoke(self, inputs: dict) -> str:
         try:
-            builder = get_builder()
+            builder: Any = get_builder()
             skills_input = inputs.get("skills", "")
             if isinstance(skills_input, str):
                 skills_list = [s.strip() for s in skills_input.split(",") if s.strip()]
             else:
                 skills_list = list(skills_input or [])
-            return builder.generate_summary(
+            return str(builder.generate_summary(
                 target_role=inputs.get("targetRole", ""),
                 skills=skills_list,
                 experience=inputs.get("experience", "")
-            )
+            ))
         except Exception as e:
             print(f"[SummaryChain] Multi-Agent notice ({e}), running fallback chain...")
-            return (summary_prompt | llm | StrOutputParser()).invoke(inputs)
+            return str((summary_prompt | llm | StrOutputParser()).invoke(inputs))
 
 class MultiAgentGenerateFromJdChain:
     """Multi-Agent Resume Construction Engine (JD Skills + Experience Architect + Projects + ATS QA)."""
     def invoke(self, inputs: dict):
         try:
-            builder = get_builder()
+            builder: Any = get_builder()
             return builder.generate_from_jd(
                 job_description=inputs.get("jobDescription", ""),
                 user_notes=inputs.get("userNotes", ""),
